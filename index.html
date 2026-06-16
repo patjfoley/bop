@@ -419,14 +419,17 @@ function profileModalHTML(){
     </div>`;
   }
   return`<div class="sheet">
-    <h2>Save your bops</h2>
-    <p class="hint">Create a free account so your bops are saved and follow you to any device. Takes 10 seconds.</p>
+    <h2>Welcome to bop</h2>
+    <div style="display:flex;gap:8px;margin:6px 0 14px">
+      <button id="tabSignup" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--ink);background:var(--ink);color:#fff;font-weight:700;cursor:pointer">Sign up</button>
+      <button id="tabLogin" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-weight:700;cursor:pointer">Log in</button>
+    </div>
+    <p class="hint" id="pmSub">Create a free account so your bops save and follow you to any device.</p>
     <input id="pmEmail" type="email" placeholder="you@email.com" autocapitalize="none" autocomplete="email">
-    <input id="pmPass" type="password" placeholder="Password (6+ characters)" autocomplete="new-password">
+    <input id="pmPass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
     <div id="pmErr" class="hint" style="color:var(--red);min-height:16px;margin:4px 0"></div>
-    <button class="bigbtn" id="pmCreate">Create account</button>
-    <button class="small" id="pmLogin" style="margin-top:10px">I already have an account — log in</button>
-    <button class="small" id="pmClose" style="margin-top:6px">Not now</button>
+    <button class="bigbtn" id="pmGo">Create account</button>
+    <button class="small" id="pmClose" style="margin-top:8px">Not now</button>
   </div>`;
 }
 function renderProfileModal(){
@@ -442,18 +445,31 @@ function renderProfileModal(){
   const doAuth=async(mode)=>{
     if(!sb){err("Can't reach the server — check your connection.");return;}
     const email=($("#pmEmail").value||"").trim(),pass=$("#pmPass").value||"";
-    if(!email||!pass){err("Enter your email and a password.");return;}
-    const btn=$(mode==="create"?"#pmCreate":"#pmLogin"),lbl=btn.textContent;btn.textContent="…";btn.disabled=true;
+    if(!email||!pass){err("Enter your email and password.");return;}
+    const btn=$("#pmGo"),lbl=btn?btn.textContent:"";if(btn){btn.textContent="…";btn.disabled=true;}
     try{
       const res=mode==="create"?await sb.auth.signUp({email,password:pass}):await sb.auth.signInWithPassword({email,password:pass});
-      if(res.error){err(res.error.message);btn.textContent=lbl;btn.disabled=false;return;}
+      if(res.error){err(res.error.message);if(btn){btn.textContent=lbl;btn.disabled=false;}return;}
       authUser=res.data.user||null;updateProfileBtn();close();
       toast(mode==="create"?"Account created 🎉":"Welcome back");
       await syncOnLogin();
-    }catch(e){err("Something went wrong — try again.");btn.textContent=lbl;btn.disabled=false;}
+    }catch(e){err("Something went wrong — try again.");if(btn){btn.textContent=lbl;btn.disabled=false;}}
   };
-  $("#pmCreate")?.addEventListener("click",()=>doAuth("create"));
-  $("#pmLogin")?.addEventListener("click",()=>doAuth("login"));
+  let authMode="create";
+  const setMode=(m)=>{
+    authMode=m;err("");
+    const su=$("#tabSignup"),li=$("#tabLogin"),go=$("#pmGo"),sub=$("#pmSub");
+    const base="flex:1;padding:11px;border-radius:10px;border:1.5px solid;font-weight:700;cursor:pointer;";
+    const on="background:var(--ink);color:#fff;border-color:var(--ink)";
+    const off="background:#fff;color:var(--ink);border-color:var(--line)";
+    if(su)su.setAttribute("style",base+(m==="create"?on:off));
+    if(li)li.setAttribute("style",base+(m==="login"?on:off));
+    if(go)go.textContent=m==="create"?"Create account":"Log in";
+    if(sub)sub.textContent=m==="create"?"Create a free account so your bops save and follow you to any device.":"Welcome back — log in to your account.";
+  };
+  $("#tabSignup")?.addEventListener("click",()=>setMode("create"));
+  $("#tabLogin")?.addEventListener("click",()=>setMode("login"));
+  $("#pmGo")?.addEventListener("click",()=>doAuth(authMode));
 }
 $("#profileBtn").addEventListener("click",renderProfileModal);
 

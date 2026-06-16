@@ -368,7 +368,6 @@ function authorName(){return profile.handle||(authUser&&authUser.email?"@"+authU
 function updateProfileBtn(){
   const btn=$("#profileBtn");if(!btn)return;
   if(authUser){btn.textContent=(authUser.email||"?")[0].toUpperCase();btn.title="Account · "+authUser.email;}
-  else if(profile.handle){btn.textContent=profile.handle.replace(/^@/,"").slice(0,1).toUpperCase();btn.title="Display name "+profile.handle;}
   else{btn.textContent="＋";btn.title="Sign in";}
 }
 

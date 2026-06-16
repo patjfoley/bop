@@ -952,13 +952,20 @@ async function storyCard(b){
   const x=c.getContext("2d");
   // sign black bg
   x.fillStyle="#0a0a0a";x.fillRect(0,0,W,H);
-  // wordmark bullets top
+  // wordmark — b·o·p bullets strung on the platform line (matches app icon + IG logo)
   const cols=["#FF6319","#0039A6","#00933C"],ltrs=["b","o","p"];
+  const wy=150,wr=52,wx=[120,232,344];
+  const lx0=wx[0]-wr-30,lx1=wx[2]+wr+30;
+  x.strokeStyle="#F4C522";x.lineWidth=7;x.lineCap="round";
+  x.beginPath();x.moveTo(lx0,wy);x.lineTo(lx1,wy);x.stroke();
+  x.fillStyle="#F4C522";
+  [lx0,lx1].forEach(tx=>{x.beginPath();x.arc(tx,wy,9,0,7);x.fill();});
   for(let i=0;i<3;i++){
-    x.fillStyle=cols[i];x.beginPath();x.arc(120+i*110,150,48,0,7);x.fill();
-    x.fillStyle="#fff";x.font="700 64px Helvetica, Arial";x.textAlign="center";
-    x.fillText(ltrs[i],120+i*110,172);
+    x.fillStyle=cols[i];x.beginPath();x.arc(wx[i],wy,wr,0,7);x.fill();
+    x.fillStyle="#fff";x.font="700 70px Helvetica, Arial";x.textAlign="center";x.textBaseline="middle";
+    x.fillText(ltrs[i],wx[i],wy+2);
   }
+  x.textAlign="left";x.textBaseline="alphabetic";
   // score badge — top right, clear of the wordmark and title
   const avg=avgScore(b);
   if(avg!=null){

@@ -388,6 +388,17 @@ async function cloudPull(){
   if(!sb||!authUser)return[];
   try{const{data}=await sb.from("bops").select("data").eq("user_id",authUser.id);return(data||[]).map(r=>r.data).filter(Boolean);}catch(e){return[];}
 }
+function myHandle(){return profile.handle||(authUser&&authUser.email?"@"+authUser.email.split("@")[0]:"");}
+async function setPublic(b,on){
+  b.public=on;await putBopLocal(b);
+  if(!sb||!authUser)return;
+  try{await sb.from("bops").upsert({id:b.id,user_id:authUser.id,data:b,is_public:on,handle:on?myHandle():null,city:on?(b.area||""):null,updated_at:new Date().toISOString()},{onConflict:"user_id,id"});}catch(e){}
+}
+async function cloudPublicByHandle(handle){
+  if(!sb)return[];
+  const h=handle.startsWith("@")?handle:"@"+handle;
+  try{const{data}=await sb.from("bops").select("data").eq("is_public",true).eq("handle",h).order("updated_at",{ascending:false}).limit(50);return(data||[]).map(r=>r.data).filter(Boolean);}catch(e){return[];}
+}
 async function syncOnLogin(){
   const cloud=await cloudPull();
   const cloudIds=new Set(cloud.map(b=>b.id));
@@ -570,6 +581,7 @@ function bindChips(){
 /* ---------------- feed ---------------- */
 async function render(){
   setTabUI();
+  if(state.view==="profile")return renderProfile();
   if(state.tab==="map"&&state.view==="feed")return renderMap();
   if(state.view==="feed")return renderFeed();
   if(state.view==="detail")return renderDetail();
@@ -608,7 +620,7 @@ async function renderFeed(){
           <div class="rank">${ri+1}</div>
           <div style="flex:1">
             <div class="ctitle">${esc(b.emoji?b.emoji+" ":"")}${esc(b.title)}</div>
-            <div class="cmeta">${esc(b.area||"")}${b.author?" · by "+esc(b.author):""}</div>
+            <div class="cmeta">${esc(b.area||"")}${b.author?` · by <a class="authlink" data-h="${esc(b.author)}" style="color:var(--blue)">${esc(b.author)}</a>`:""}</div>
           </div>
           ${b.source==="sample"?'<span class="badge">Featured</span>':""}
           ${scoreBadge(avg)}
@@ -626,6 +638,7 @@ async function renderFeed(){
   bindChips();
   $("#emptyCreate")?.addEventListener("click",startDraft);
   $("#emptyExplore")?.addEventListener("click",()=>{state={tab:"explore",view:"feed",bopId:null,draft:null};render();});
+  main.querySelectorAll(".authlink").forEach(a=>a.onclick=e=>{e.stopPropagation();goProfile(a.dataset.h);});
   main.querySelectorAll(".card").forEach(c=>c.addEventListener("click",()=>{
     state.view="detail";state.bopId=c.dataset.id;render();
   }));
@@ -689,12 +702,12 @@ async function renderDetail(){
   let html=`<div class="detailhead">
     <button class="backbtn" id="back">‹ Back</button>
     <h1>${esc(b.emoji?b.emoji+" ":"")}${esc(b.title)} ${scoreBadge(avg)}</h1>
-    <div class="cmeta">${esc(b.area||"")}${b.author?" · by "+esc(b.author):""}
+    <div class="cmeta">${esc(b.area||"")}${b.author?` · by <a class="authlink" data-h="${esc(b.author)}" style="color:var(--blue)">${esc(b.author)}</a>`:""}
       ${len?` · ${len} from first to last stop`:""}</div>
     <div class="actions">
       <button class="iconbtn primary" id="story">📲 Story card</button>
       <button class="iconbtn" id="share">↗ Send bop</button>
-      ${b.source==="mine"?'<button class="iconbtn" id="edit">✏️ Edit</button><button class="iconbtn" id="del">🗑</button>'
+      ${b.source==="mine"?`<button class="iconbtn" id="pub">${b.public?"🌐 Published":"🔒 Publish"}</button><button class="iconbtn" id="edit">✏️ Edit</button><button class="iconbtn" id="del">🗑</button>`
         :'<button class="iconbtn" id="copy">📒 Save to My Bops</button>'}
     </div>
   </div>
@@ -759,7 +772,14 @@ async function renderDetail(){
   $("#scorechips").querySelectorAll("button").forEach(btn=>btn.onclick=async()=>{
     b.myRating=Number(btn.dataset.n);await putBop(b);render();toast("Rated "+b.myRating+"/10");
   });
+  main.querySelectorAll(".authlink").forEach(a=>a.onclick=e=>{e.stopPropagation();goProfile(a.dataset.h);});
   if(b.source==="mine"){
+    $("#pub").onclick=async()=>{
+      if(!authUser){toast("Sign in to publish");renderProfileModal();return;}
+      const on=!b.public;await setPublic(b,on);
+      if(window.posthog)posthog.capture(on?"published_bop":"unpublished_bop");
+      toast(on?"Published to your profile 🌐":"Made private");render();
+    };
     $("#edit").onclick=()=>{state.view="edit";state.draft=JSON.parse(JSON.stringify(b));render();};
     $("#del").onclick=async()=>{
       if(!confirm("Delete this bop?"))return;
@@ -995,16 +1015,18 @@ async function shareBop(b){
     catch(e){prompt("Copy this link to share:",link);}
   };
 }
+async function importBopData(data){
+  const bop={id:uid(),format:"bop/v1",source:"imported",createdAt:Date.now(),myRating:0,ratings:[],
+    title:data.title||"Untitled bop",area:data.area||"",emoji:data.emoji||"",
+    goodFor:data.goodFor||"",author:data.author||"a friend",
+    stops:(data.stops||[]).map(s=>Object.assign(newStop(),s))};
+  await putBop(bop);return bop;
+}
 async function importBopFromHash(){
   const h=location.hash;
   if(!h.startsWith("#b="))return false;
   try{
-    const data=decodeBopLink(h.slice(3));
-    const bop={id:uid(),format:"bop/v1",source:"imported",createdAt:Date.now(),myRating:0,ratings:[],
-      title:data.title||"Untitled bop",area:data.area||"",emoji:data.emoji||"",
-      goodFor:data.goodFor||"",author:data.author||"a friend",
-      stops:(data.stops||[]).map(s=>Object.assign(newStop(),s))};
-    await putBop(bop);
+    const bop=await importBopData(decodeBopLink(h.slice(3)));
     history.replaceState(null,"",location.pathname+location.search);
     state={tab:"explore",view:"detail",bopId:bop.id,draft:null};
     if(window.posthog)posthog.capture("imported_bop");
@@ -1015,6 +1037,40 @@ async function importBopFromHash(){
     toast("That bop link looks broken");
     return false;
   }
+}
+function goProfile(handle){
+  if(!handle)return;
+  state={tab:"explore",view:"profile",handle:handle.startsWith("@")?handle:"@"+handle,bopId:null,draft:null};
+  render();
+}
+function maybeRouteProfile(){
+  if(!location.hash.startsWith("#@"))return false;
+  state={tab:"explore",view:"profile",handle:decodeURIComponent(location.hash.slice(1)),bopId:null,draft:null};
+  return true;
+}
+async function renderProfile(){
+  const handle=state.handle||"",name=esc(handle.replace(/^@/,""));
+  $("#subtitle").textContent="@"+name;
+  main.innerHTML=`<div class="empty">Loading @${name}…</div>`;
+  const bops=await cloudPublicByHandle(handle);
+  let html=`<div class="detailhead"><button class="backbtn" id="back">‹ Back</button>
+    <h1>@${name}</h1>
+    <div class="cmeta">${bops.length} published bop${bops.length!==1?"s":""} · their day, stop by stop</div></div>`;
+  html+=bops.length?bops.map((b,i)=>{const avg=avgScore(b),len=dayLength(b.stops||[]);
+    return`<div class="card" data-pi="${i}"><div class="cardtop"><div style="flex:1">
+      <div class="ctitle">${esc(b.emoji?b.emoji+" ":"")}${esc(b.title)}</div>
+      <div class="cmeta">${esc(b.area||"")}</div></div>${scoreBadge(avg)}</div>
+      ${routePreview(b)}
+      <div class="cstats"><span><b>${(b.stops||[]).length}</b> stops</span>${len?`<span><b>${len}</b> day</span>`:""}</div></div>`;}).join("")
+    :`<div class="empty">No published bops yet.</div>`;
+  main.innerHTML=html;
+  $("#back").onclick=()=>{history.replaceState(null,"",location.pathname+location.search);state={tab:"explore",view:"feed",bopId:null,draft:null};render();};
+  main.querySelectorAll(".card").forEach(c=>c.onclick=async()=>{
+    const imp=await importBopData(bops[+c.dataset.pi]);
+    history.replaceState(null,"",location.pathname+location.search);
+    state={tab:"mine",view:"detail",bopId:imp.id,draft:null};render();
+    toast("Saved to your bops 📒");
+  });
 }
 /* ---------------- story card (9:16, for IG/TikTok) ---------------- */
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);
@@ -1233,7 +1289,7 @@ async function seed(){
 /* ---------------- boot ---------------- */
 function maybeOnboard(){
   if(localStorage.getItem("bop-onboarded"))return;
-  if(location.hash.startsWith("#b="))return;
+  if(location.hash.startsWith("#b=")||location.hash.startsWith("#@"))return;
   const m=$("#onboardModal");if(!m)return;
   m.innerHTML=`<div class="sheet">
     <h2>welcome to bop 👋</h2>
@@ -1261,7 +1317,7 @@ function maybeInstallNudge(){
 }
 updateProfileBtn();
 openDB().then(seed).then(async()=>{
-  await importBopFromHash();
+  if(!maybeRouteProfile())await importBopFromHash();
   render();
   initAuth();
   maybeOnboard();

@@ -252,7 +252,6 @@ textarea{min-height:60px;resize:vertical}
       <div class="sub" id="subtitle">Your day, stop by stop</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
-      <button class="iconbtn hidden" id="importBtn" style="background:#222;border-color:#444;color:#fff">⬇ Import</button>
       <button class="profilebtn" id="profileBtn" title="Sign in">＋</button>
     </div>
   </header>
@@ -263,7 +262,6 @@ textarea{min-height:60px;resize:vertical}
     <button class="tabbtn big" data-tab="create"><span class="ic">＋</span></button>
     <button class="tabbtn" data-tab="mine"><span class="ic">📒</span>My Bops</button>
   </nav>
-  <input type="file" id="importFile" accept=".json,application/json" class="hidden">
   <div class="toast" id="toast"></div>
   <div class="modal hidden" id="storyModal"></div>
   <div class="modal hidden" id="shareModal"></div>
@@ -529,7 +527,6 @@ document.querySelectorAll(".tabbtn").forEach(b=>b.addEventListener("click",()=>{
 function setTabUI(){
   document.querySelectorAll(".tabbtn").forEach(b=>
     b.classList.toggle("active",b.dataset.tab===state.tab&&!b.classList.contains("big")));
-  $("#importBtn").classList.toggle("hidden",!(state.tab==="explore"&&state.view==="feed"));
 }
 
 /* ---------------- filters ---------------- */
@@ -1004,27 +1001,6 @@ async function importBopFromHash(){
     return false;
   }
 }
-$("#importBtn").onclick=()=>$("#importFile").click();
-$("#importFile").onchange=async()=>{
-  const f=$("#importFile").files[0];if(!f)return;
-  try{
-    const data=JSON.parse(await f.text());
-    if(data.format!=="bop/v1")throw 0;
-    const idMap={};
-    for(const[mid,durl]of Object.entries(data.media||{})){
-      const nid=uid();idMap[mid]=nid;
-      await putMedia({id:nid,blob:dataURLToBlob(durl)});
-    }
-    delete data.media;
-    data.id=uid();data.createdAt=Date.now();data.source="imported";
-    for(const s of(data.stops||[]))s.mediaIds=(s.mediaIds||[]).map(m=>idMap[m]).filter(Boolean);
-    await putBop(data);
-    state={tab:"explore",view:"detail",bopId:data.id,draft:null};
-    render();toast("Bop imported!");
-  }catch(e){toast("That doesn't look like a bop file");}
-  $("#importFile").value="";
-};
-
 /* ---------------- story card (9:16, for IG/TikTok) ---------------- */
 function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);
   ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);

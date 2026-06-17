@@ -440,6 +440,7 @@ function profileModalHTML(){
       <button class="bigbtn" id="pmSaveName">Save name</button>
       <button class="small" id="pmSignOut" style="margin-top:12px">Sign out</button>
       <button class="small" id="pmClose" style="margin-top:6px">Done</button>
+      <button class="small" id="pmDelete" style="margin-top:14px;color:var(--red)">Delete account</button>
     </div>`;
   }
   return`<div class="sheet">
@@ -466,6 +467,20 @@ function renderProfileModal(){
   const close=()=>modal.classList.add("hidden");
   $("#pmClose")?.addEventListener("click",close);
   $("#pmSignOut")?.addEventListener("click",async()=>{try{await sb?.auth.signOut();}catch(e){}authUser=null;updateProfileBtn();close();render();toast("Signed out");});
+  $("#pmDelete")?.addEventListener("click",async()=>{
+    if(!confirm("Permanently delete your account and all your bops? This can't be undone."))return;
+    const btn=$("#pmDelete");btn.textContent="Deleting…";btn.disabled=true;
+    try{
+      const{error}=await sb.functions.invoke("delete-account");
+      if(error)throw error;
+      const all=await allBops();
+      for(const b of all){if(b.source!=="sample")await tx("bops","readwrite",s=>s.delete(b.id));}
+      try{await sb.auth.signOut();}catch(e){}
+      authUser=null;profile={};localStorage.removeItem("bop-profile");
+      if(window.posthog){posthog.capture("account_deleted");posthog.reset();}
+      updateProfileBtn();close();render();toast("Account deleted");
+    }catch(e){btn.textContent="Delete account";btn.disabled=false;toast("Couldn't delete — email hello@joinbop.com");}
+  });
   $("#pmSaveName")?.addEventListener("click",()=>{let v=$("#pmHandle").value.trim();if(v&&!v.startsWith("@"))v="@"+v;saveProfile(Object.assign({},profile,{handle:v}));toast("Saved");close();});
   const err=m=>{const e=$("#pmErr");if(e)e.textContent=m||"";};
   const doAuth=async(mode)=>{

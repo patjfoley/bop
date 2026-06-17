@@ -817,6 +817,45 @@ function startDraft(){
       stops:[newStop()],ratings:[],myRating:0,source:"mine"}};
   render();
 }
+function attachAutocomplete(inp,onPick){
+  if(!inp)return;
+  let dd=null,t=null,items=[];
+  const close=()=>{if(dd){dd.remove();dd=null;}items=[];};
+  const show=()=>{
+    close();
+    if(!items.length||document.activeElement!==inp)return;
+    const rect=inp.getBoundingClientRect();
+    dd=document.createElement("div");
+    dd.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.bottom+4}px;width:${rect.width}px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.2);z-index:3000;max-height:46vh;overflow:auto`;
+    items.forEach((f,i)=>{
+      const p=f.properties;
+      const sub=[p.housenumber&&p.street?p.housenumber+" "+p.street:p.street,p.city||p.county,p.state].filter(Boolean).slice(0,2).join(", ");
+      const row=document.createElement("div");
+      row.style.cssText="padding:11px 13px;cursor:pointer"+(i<items.length-1?";border-bottom:1px solid var(--line)":"");
+      row.innerHTML=`<div style="font-weight:600;font-size:14px;color:var(--ink)">${esc(p.name)}</div>${sub?`<div style="font-size:12px;color:var(--dim);margin-top:1px">${esc(sub)}</div>`:""}`;
+      row.addEventListener("mousedown",e=>e.preventDefault());
+      row.addEventListener("click",()=>{
+        const c=f.geometry&&f.geometry.coordinates;
+        const subl=[p.city||p.county,p.state].filter(Boolean).slice(0,2).join(", ");
+        onPick({name:p.name,label:[p.name,subl].filter(Boolean).join(", "),lat:c?c[1]:null,lng:c?c[0]:null});
+        close();
+      });
+      dd.appendChild(row);
+    });
+    document.body.appendChild(dd);
+  };
+  const search=async(q)=>{
+    if(!q||q.trim().length<3){close();return;}
+    try{
+      const r=await fetch("https://photon.komoot.io/api/?limit=6&lang=en&q="+encodeURIComponent(q));
+      const j=await r.json();
+      items=(j.features||[]).filter(f=>f.properties&&f.properties.name);
+      show();
+    }catch(e){close();}
+  };
+  inp.addEventListener("input",()=>{clearTimeout(t);const q=inp.value;t=setTimeout(()=>search(q),250);});
+  inp.addEventListener("blur",()=>setTimeout(close,200));
+}
 function renderEditor(){
   const d=state.draft;
   $("#subtitle").textContent="Log the day, stop by stop";
@@ -840,6 +879,7 @@ function renderEditor(){
   $("#back").onclick=()=>{state.view="feed";state.draft=null;render();};
   $("#f_title").oninput=e=>d.title=e.target.value;
   $("#f_area").oninput=e=>d.area=e.target.value;
+  attachAutocomplete($("#f_area"),r=>{d.area=r.label;$("#f_area").value=r.label;});
   $("#goodfor").querySelectorAll("button").forEach(b=>b.onclick=()=>{
     d.goodFor=d.goodFor===b.dataset.v?"":b.dataset.v;
     $("#goodfor").querySelectorAll("button").forEach(x=>x.classList.toggle("sel",x.dataset.v===d.goodFor));
@@ -895,6 +935,12 @@ function renderStops(){
     const i=Number(el.dataset.i),s=d.stops[i];
     el.querySelectorAll("[data-f]").forEach(inp=>inp.oninput=()=>{
       s[inp.dataset.f]=inp.dataset.f==="wait"?Number(inp.value)||0:inp.value;
+    });
+    const placeInp=el.querySelector('[data-f="place"]');
+    attachAutocomplete(placeInp,r=>{
+      s.place=r.name;placeInp.value=r.name;
+      if(r.lat!=null){s.lat=r.lat;s.lng=r.lng;const lb=el.querySelector(".locbtn");if(lb){lb.textContent="✓ Pinned on map";lb.classList.add("ok");}}
+      if(window.posthog)posthog.capture("place_picked");
     });
     el.querySelectorAll("[data-seg]").forEach(seg=>{
       const key=seg.dataset.seg;

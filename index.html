@@ -398,7 +398,7 @@ async function syncOnLogin(){
 function initAuth(){
   if(!sb)return;
   sb.auth.getSession().then(({data})=>{authUser=data.session?.user||null;updateProfileBtn();if(authUser)syncOnLogin();});
-  sb.auth.onAuthStateChange((_e,session)=>{authUser=session?.user||null;updateProfileBtn();});
+  sb.auth.onAuthStateChange((event,session)=>{authUser=session?.user||null;updateProfileBtn();if(event==="PASSWORD_RECOVERY")renderRecoveryModal();});
 }
 
 /* ---------------- account modal ---------------- */
@@ -428,6 +428,7 @@ function profileModalHTML(){
     <input id="pmPass" type="password" placeholder="Password (6+ characters)" autocomplete="current-password">
     <div id="pmErr" class="hint" style="color:var(--red);min-height:16px;margin:4px 0"></div>
     <button class="bigbtn" id="pmGo">Create account</button>
+    <button class="small" id="pmForgot" style="margin-top:8px;display:none">Forgot password?</button>
     <button class="small" id="pmClose" style="margin-top:8px">Not now</button>
   </div>`;
 }
@@ -457,20 +458,57 @@ function renderProfileModal(){
   let authMode="create";
   const setMode=(m)=>{
     authMode=m;err("");
-    const su=$("#tabSignup"),li=$("#tabLogin"),go=$("#pmGo"),sub=$("#pmSub");
+    const su=$("#tabSignup"),li=$("#tabLogin"),go=$("#pmGo"),sub=$("#pmSub"),fg=$("#pmForgot");
     const base="flex:1;padding:11px;border-radius:10px;border:1.5px solid;font-weight:700;cursor:pointer;";
     const on="background:var(--ink);color:#fff;border-color:var(--ink)";
     const off="background:#fff;color:var(--ink);border-color:var(--line)";
     if(su)su.setAttribute("style",base+(m==="create"?on:off));
     if(li)li.setAttribute("style",base+(m==="login"?on:off));
     if(go)go.textContent=m==="create"?"Create account":"Log in";
+    if(fg)fg.style.display=m==="login"?"block":"none";
     if(sub)sub.textContent=m==="create"?"Create a free account so your bops save and follow you to any device.":"Welcome back — log in to your account.";
   };
   $("#tabSignup")?.addEventListener("click",()=>setMode("create"));
   $("#tabLogin")?.addEventListener("click",()=>setMode("login"));
   $("#pmGo")?.addEventListener("click",()=>doAuth(authMode));
+  $("#pmForgot")?.addEventListener("click",async()=>{
+    if(!sb)return;
+    const email=($("#pmEmail").value||"").trim();
+    if(!email){err("Enter your email above first.");return;}
+    const fg=$("#pmForgot"),fl=fg.textContent;fg.textContent="Sending…";fg.disabled=true;
+    try{
+      const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+      fg.textContent=fl;fg.disabled=false;
+      if(error){err(error.message);return;}
+      err("");const sub=$("#pmSub");if(sub)sub.textContent="Reset link sent — check your email (and spam).";
+      toast("Reset link sent 📧");
+    }catch(e){fg.textContent=fl;fg.disabled=false;err("Couldn't send — try again.");}
+  });
 }
 $("#profileBtn").addEventListener("click",renderProfileModal);
+function renderRecoveryModal(){
+  const modal=$("#profileModal");
+  modal.innerHTML=`<div class="sheet">
+    <h2>Set a new password</h2>
+    <p class="hint">Choose a new password for your account.</p>
+    <input id="rcPass" type="password" placeholder="New password (6+ characters)" autocomplete="new-password">
+    <div id="rcErr" class="hint" style="color:var(--red);min-height:16px;margin:4px 0"></div>
+    <button class="bigbtn" id="rcSave">Update password</button>
+  </div>`;
+  modal.classList.remove("hidden");
+  $("#rcSave").addEventListener("click",async()=>{
+    const p=$("#rcPass").value||"",e=$("#rcErr");
+    if(p.length<6){e.textContent="At least 6 characters.";return;}
+    const btn=$("#rcSave");btn.textContent="…";btn.disabled=true;
+    try{
+      const{error}=await sb.auth.updateUser({password:p});
+      if(error){e.textContent=error.message;btn.textContent="Update password";btn.disabled=false;return;}
+      modal.classList.add("hidden");toast("Password updated 🎉");
+      history.replaceState(null,"",location.pathname+location.search);
+      render();
+    }catch(err){e.textContent="Something went wrong.";btn.textContent="Update password";btn.disabled=false;}
+  });
+}
 
 /* ---------------- state & routing ---------------- */
 let state={tab:"explore",view:"feed",bopId:null,draft:null};

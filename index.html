@@ -817,7 +817,15 @@ function startDraft(){
       stops:[newStop()],ratings:[],myRating:0,source:"mine"}};
   render();
 }
-function attachAutocomplete(inp,onPick){
+async function ensureAreaCoords(d){
+  if(d.areaLat!=null||!d.area||!d.area.trim())return;
+  try{
+    const r=await fetch("https://photon.komoot.io/api/?limit=1&lang=en&q="+encodeURIComponent(d.area));
+    const j=await r.json();const c=j.features&&j.features[0]&&j.features[0].geometry.coordinates;
+    if(c){d.areaLng=c[0];d.areaLat=c[1];}
+  }catch(e){}
+}
+function attachAutocomplete(inp,onPick,getBias){
   if(!inp)return;
   let dd=null,t=null,items=[];
   const close=()=>{if(dd){dd.remove();dd=null;}items=[];};
@@ -846,8 +854,10 @@ function attachAutocomplete(inp,onPick){
   };
   const search=async(q)=>{
     if(!q||q.trim().length<3){close();return;}
+    let url="https://photon.komoot.io/api/?limit=6&lang=en&q="+encodeURIComponent(q);
+    try{const b=getBias?await getBias():null;if(b&&b.lat!=null)url+="&lat="+b.lat+"&lon="+b.lng;}catch(e){}
     try{
-      const r=await fetch("https://photon.komoot.io/api/?limit=6&lang=en&q="+encodeURIComponent(q));
+      const r=await fetch(url);
       const j=await r.json();
       items=(j.features||[]).filter(f=>f.properties&&f.properties.name);
       show();
@@ -879,7 +889,7 @@ function renderEditor(){
   $("#back").onclick=()=>{state.view="feed";state.draft=null;render();};
   $("#f_title").oninput=e=>d.title=e.target.value;
   $("#f_area").oninput=e=>d.area=e.target.value;
-  attachAutocomplete($("#f_area"),r=>{d.area=r.label;$("#f_area").value=r.label;});
+  attachAutocomplete($("#f_area"),r=>{d.area=r.label;$("#f_area").value=r.label;if(r.lat!=null){d.areaLat=r.lat;d.areaLng=r.lng;}});
   $("#goodfor").querySelectorAll("button").forEach(b=>b.onclick=()=>{
     d.goodFor=d.goodFor===b.dataset.v?"":b.dataset.v;
     $("#goodfor").querySelectorAll("button").forEach(x=>x.classList.toggle("sel",x.dataset.v===d.goodFor));
@@ -941,7 +951,7 @@ function renderStops(){
       s.place=r.name;placeInp.value=r.name;
       if(r.lat!=null){s.lat=r.lat;s.lng=r.lng;const lb=el.querySelector(".locbtn");if(lb){lb.textContent="✓ Pinned on map";lb.classList.add("ok");}}
       if(window.posthog)posthog.capture("place_picked");
-    });
+    },async()=>{await ensureAreaCoords(d);return d.areaLat!=null?{lat:d.areaLat,lng:d.areaLng}:null;});
     el.querySelectorAll("[data-seg]").forEach(seg=>{
       const key=seg.dataset.seg;
       seg.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{

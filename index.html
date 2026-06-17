@@ -266,6 +266,7 @@ textarea{min-height:60px;resize:vertical}
   <div class="modal hidden" id="storyModal"></div>
   <div class="modal hidden" id="shareModal"></div>
   <div class="modal hidden" id="profileModal"></div>
+  <div class="modal hidden" id="onboardModal"></div>
 </div>
 <!-- QR Code Generator — Kazuhiko Arase, MIT (qrcode-generator@1.4.4, minified). Used to render scannable bop deep-links on story cards. -->
 <script id="qrlib">/**
@@ -585,9 +586,13 @@ async function renderFeed(){
   let html=state.tab==="explore"?chipsHTML():"";
   if(state.tab==="explore")list=list.filter(bopMatches);
   if(!list.length){
-    html+=`<div class="empty">${state.tab==="mine"
-      ?"No bops yet.<br>Tap <b>＋</b> to log your first day — every stop, photo, and detour."
-      :"Nothing matches.<br>Clear some filters, or import a friend's bop with the button above."}</div>`;
+    html+=state.tab==="mine"
+      ?`<div class="empty"><div style="font-size:42px;margin-bottom:6px">🗺️</div>
+          <b style="font-size:17px;color:var(--ink)">Make your first bop</b><br>
+          Plan a day stop by stop — coffee, lunch, that bar — then share it to your Story.
+          <div style="margin-top:16px"><button class="bigbtn" id="emptyCreate" style="max-width:260px;margin:0 auto">＋ Start a bop</button></div>
+          <button class="small" id="emptyExplore" style="margin-top:10px">or browse ideas →</button></div>`
+      :`<div class="empty">Nothing matches.<br>Try clearing a filter.</div>`;
   }else{
     html+=list.map((b,ri)=>{
       const avg=avgScore(b);
@@ -613,6 +618,8 @@ async function renderFeed(){
   }
   main.innerHTML=html;
   bindChips();
+  $("#emptyCreate")?.addEventListener("click",startDraft);
+  $("#emptyExplore")?.addEventListener("click",()=>{state={tab:"explore",view:"feed",bopId:null,draft:null};render();});
   main.querySelectorAll(".card").forEach(c=>c.addEventListener("click",()=>{
     state.view="detail";state.bopId=c.dataset.id;render();
   }));
@@ -1215,11 +1222,41 @@ async function seed(){
 }
 
 /* ---------------- boot ---------------- */
+function maybeOnboard(){
+  if(localStorage.getItem("bop-onboarded"))return;
+  if(location.hash.startsWith("#b="))return;
+  const m=$("#onboardModal");if(!m)return;
+  m.innerHTML=`<div class="sheet">
+    <h2>welcome to bop 👋</h2>
+    <p class="hint">Plan your perfect day — coffee, lunch, drinks, that spot — laid out stop by stop. Then share it to your Story so friends can tap through it.</p>
+    <button class="bigbtn" id="obStart">＋ Make my first bop</button>
+    <button class="small" id="obBrowse" style="margin-top:10px">Browse ideas first</button>
+  </div>`;
+  m.classList.remove("hidden");
+  const done=()=>{localStorage.setItem("bop-onboarded","1");m.classList.add("hidden");};
+  $("#obStart").onclick=()=>{done();startDraft();};
+  $("#obBrowse").onclick=done;
+  m.onclick=e=>{if(e.target===m)done();};
+}
+function maybeInstallNudge(){
+  if(localStorage.getItem("bop-a2hs"))return;
+  const ua=navigator.userAgent||"";
+  const standalone=window.navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
+  if(standalone||!/iphone|ipad|ipod/i.test(ua))return;
+  if(!$("#onboardModal").classList.contains("hidden"))return;
+  const bar=document.createElement("div");
+  bar.style.cssText="position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 78px);background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;z-index:1500;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.4)";
+  bar.innerHTML=`<span style="flex:1">Add bop to your Home Screen — tap <b>Share ⬆️</b>, then <b>Add to Home Screen</b>.</span><button id="a2hsX" style="background:none;border:none;color:#aaa;font-size:18px;cursor:pointer">✕</button>`;
+  document.body.appendChild(bar);
+  bar.querySelector("#a2hsX").onclick=()=>{localStorage.setItem("bop-a2hs","1");bar.remove();};
+}
 updateProfileBtn();
 openDB().then(seed).then(async()=>{
   await importBopFromHash();
   render();
   initAuth();
+  maybeOnboard();
+  setTimeout(maybeInstallNudge,8000);
 });
 </script>
 </body>

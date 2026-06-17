@@ -621,52 +621,80 @@ function routePreview(b){
       <div class="stlbl">${esc(s.title||s.place||"")}</div></div>`).join("")}
   </div></div>`;
 }
+async function cloudPublicBops(){
+  if(!sb)return[];
+  try{const{data}=await sb.from("bops").select("data,handle,city").eq("is_public",true).order("updated_at",{ascending:false}).limit(60);
+    return(data||[]).map(r=>{const b=r.data||{};b._handle=r.handle;b._city=r.city;return b;}).filter(b=>b&&b.title);}catch(e){return[];}
+}
+function cityChips(cities){
+  if(!cities.length)return"";
+  return`<div class="chips">
+    <button class="chip ${!state.city?"on":""}" data-city="">📍 All cities</button>
+    ${cities.map(c=>`<button class="chip ${state.city===c?"on":""}" data-city="${esc(c)}">${esc(c)}</button>`).join("")}
+  </div>`;
+}
+function cardHTML(b,ri,tap){
+  const avg=avgScore(b),len=dayLength(b.stops||[]);
+  const loc=b.area||b._city||"",auth=b.author||b._handle||"";
+  const nR=(b.ratings||[]).length+(b.myRating?1:0);
+  return`<div class="card ${ri<3?"top3":""}" ${tap}>
+    <div class="cardtop">
+      <div class="rank">${ri+1}</div>
+      <div style="flex:1">
+        <div class="ctitle">${esc(b.emoji?b.emoji+" ":"")}${esc(b.title)}</div>
+        <div class="cmeta">${esc(loc)}${auth?` · by <a class="authlink" data-h="${esc(auth)}" style="color:var(--blue)">${esc(auth)}</a>`:""}</div>
+      </div>
+      ${b.source==="sample"?'<span class="badge">Featured</span>':""}
+      ${scoreBadge(avg)}
+    </div>
+    ${routePreview(b)}
+    <div class="cstats">
+      <span><b>${(b.stops||[]).length}</b> stops</span>
+      ${len?`<span><b>${len}</b> day</span>`:""}
+      ${b.goodFor?`<span>${b.goodFor==="group"?"👥 group":b.goodFor==="date"?"❤️ date":"🧍 solo"}</span>`:""}
+      ${avg?`<span><b>${nR}</b> rating${nR!==1?"s":""}</span>`:"<span>no ratings yet</span>"}
+    </div>
+  </div>`;
+}
 async function renderFeed(){
   const bops=await allBops();
   let list=state.tab==="mine"?bops.filter(b=>b.source==="mine"):bops.filter(b=>b.source!=="mine");
-  // beli-style ranked list: highest community score first, unrated sink to the bottom
   list.sort((a,b)=>(avgScore(b)??-1)-(avgScore(a)??-1)||b.createdAt-a.createdAt);
   $("#subtitle").textContent=state.tab==="mine"?"Your days, ranked":"Your day, stop by stop";
-  let html=state.tab==="explore"?chipsHTML():"";
-  if(state.tab==="explore")list=list.filter(bopMatches);
-  if(!list.length){
-    html+=state.tab==="mine"
-      ?`<div class="empty"><div style="font-size:42px;margin-bottom:6px">🗺️</div>
+  let cloud=[];
+  if(state.tab==="mine"){
+    main.innerHTML=list.length
+      ?list.map((b,ri)=>cardHTML(b,ri,`data-id="${b.id}"`)).join("")
+      :`<div class="empty"><div style="font-size:42px;margin-bottom:6px">🗺️</div>
           <b style="font-size:17px;color:var(--ink)">Make your first bop</b><br>
           Plan a day stop by stop — coffee, lunch, that bar — then share it to your Story.
           <div style="margin-top:16px"><button class="bigbtn" id="emptyCreate" style="max-width:260px;margin:0 auto">＋ Start a bop</button></div>
-          <button class="small" id="emptyExplore" style="margin-top:10px">or browse ideas →</button></div>`
-      :`<div class="empty">Nothing matches.<br>Try clearing a filter.</div>`;
+          <button class="small" id="emptyExplore" style="margin-top:10px">or browse ideas →</button></div>`;
   }else{
-    html+=list.map((b,ri)=>{
-      const avg=avgScore(b);
-      const len=dayLength(b.stops||[]);
-      return`<div class="card ${ri<3?"top3":""}" data-id="${b.id}">
-        <div class="cardtop">
-          <div class="rank">${ri+1}</div>
-          <div style="flex:1">
-            <div class="ctitle">${esc(b.emoji?b.emoji+" ":"")}${esc(b.title)}</div>
-            <div class="cmeta">${esc(b.area||"")}${b.author?` · by <a class="authlink" data-h="${esc(b.author)}" style="color:var(--blue)">${esc(b.author)}</a>`:""}</div>
-          </div>
-          ${b.source==="sample"?'<span class="badge">Featured</span>':""}
-          ${scoreBadge(avg)}
-        </div>
-        ${routePreview(b)}
-        <div class="cstats">
-          <span><b>${(b.stops||[]).length}</b> stops</span>
-          ${len?`<span><b>${len}</b> day</span>`:""}
-          ${b.goodFor?`<span>${b.goodFor==="group"?"👥 group":b.goodFor==="date"?"❤️ date":"🧍 solo"}</span>`:""}
-          ${avg?`<span><b>${(b.ratings||[]).length+(b.myRating?1:0)}</b> rating${((b.ratings||[]).length+(b.myRating?1:0))!==1?"s":""}</span>`:"<span>no ratings yet</span>"}
-        </div>
-      </div>`;}).join("");
+    cloud=await cloudPublicBops();
+    const cities=[...new Set(cloud.map(b=>(b._city||"").trim()).filter(Boolean))].slice(0,10);
+    if(state.city)cloud=cloud.filter(b=>(b._city||b.area||"").toLowerCase().includes(state.city.toLowerCase()));
+    const feat=list.filter(bopMatches);
+    let html=cityChips(cities)+chipsHTML();
+    if(cloud.length){
+      html+=`<div class="cmeta" style="padding:6px 4px 2px;font-weight:700;color:var(--ink)">From the community</div>`;
+      html+=cloud.map((b,i)=>cardHTML(b,i,`data-cloud="${i}"`)).join("");
+    }
+    html+=`<div class="cmeta" style="padding:14px 4px 2px;font-weight:700;color:var(--ink)">Featured</div>`;
+    html+=feat.length?feat.map((b,ri)=>cardHTML(b,ri,`data-id="${b.id}"`)).join(""):`<div class="empty">Nothing matches.<br>Try clearing a filter.</div>`;
+    main.innerHTML=html;
+    bindChips();
+    main.querySelectorAll("[data-city]").forEach(c=>c.onclick=()=>{state.city=c.dataset.city;render();});
+    main.querySelectorAll("[data-cloud]").forEach(c=>c.onclick=async()=>{
+      const imp=await importBopData(cloud[+c.dataset.cloud]);
+      state={tab:"mine",view:"detail",bopId:imp.id,draft:null};render();toast("Saved to your bops 📒");
+    });
   }
-  main.innerHTML=html;
-  bindChips();
   $("#emptyCreate")?.addEventListener("click",startDraft);
   $("#emptyExplore")?.addEventListener("click",()=>{state={tab:"explore",view:"feed",bopId:null,draft:null};render();});
   main.querySelectorAll(".authlink").forEach(a=>a.onclick=e=>{e.stopPropagation();goProfile(a.dataset.h);});
-  main.querySelectorAll(".card").forEach(c=>c.addEventListener("click",()=>{
-    state.view="detail";state.bopId=c.dataset.id;render();
+  main.querySelectorAll("[data-id]").forEach(c=>c.addEventListener("click",()=>{
+    state.view="detail";state.bopId=c.getAttribute("data-id");render();
   }));
 }
 

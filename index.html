@@ -828,7 +828,7 @@ async function ensureAreaCoords(d){
 function attachAutocomplete(inp,onPick,getBias){
   if(!inp)return;
   let dd=null,t=null,items=[];
-  const close=()=>{if(dd){dd.remove();dd=null;}items=[];};
+  const close=()=>{if(dd){dd.remove();dd=null;}};
   const show=()=>{
     close();
     if(!items.length||document.activeElement!==inp)return;
@@ -853,7 +853,7 @@ function attachAutocomplete(inp,onPick,getBias){
     document.body.appendChild(dd);
   };
   const search=async(q)=>{
-    if(!q||q.trim().length<3){close();return;}
+    if(!q||q.trim().length<3){items=[];close();return;}
     let url="https://photon.komoot.io/api/?limit=6&lang=en&q="+encodeURIComponent(q);
     try{const b=getBias?await getBias():null;if(b&&b.lat!=null)url+="&lat="+b.lat+"&lon="+b.lng;}catch(e){}
     try{

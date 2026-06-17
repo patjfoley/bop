@@ -452,6 +452,7 @@ function renderProfileModal(){
       if(res.error){err(res.error.message);if(btn){btn.textContent=lbl;btn.disabled=false;}return;}
       authUser=res.data.user||null;updateProfileBtn();close();
       toast(mode==="create"?"Account created 🎉":"Welcome back");
+      if(mode==="create"&&sb)sb.functions.invoke("welcome").catch(()=>{});
       await syncOnLogin();
     }catch(e){err("Something went wrong — try again.");if(btn){btn.textContent=lbl;btn.disabled=false;}}
   };

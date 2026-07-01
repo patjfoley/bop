@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["DK5Z2YLB9P.com.patrickfoley.bop"],
+        "components": [
+          { "/": "/b/*", "comment": "Open shared bops in the app" }
+        ]
+      }
+    ]
+  }
+}

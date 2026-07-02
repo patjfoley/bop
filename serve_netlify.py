@@ -12,6 +12,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if path.startswith("/b/") and not path.startswith("/b.html"):
             # Netlify: /b/*  /b.html  200  (URL preserved, content rewritten)
             self.path = "/b.html"
+        elif path.startswith("/u/") and not path.startswith("/u.html"):
+            self.path = "/u.html"
         elif path in REWRITES:
             self.path = REWRITES[path]
         return super().do_GET()

@@ -62,10 +62,13 @@ h1 .stopby{color:var(--orange)}
 .cta small{display:block;font-weight:500;font-size:11px;color:#bbb;margin-top:2px}
 .nyc{font-size:12px;color:var(--faint);margin-top:12px}
 
-/* CSS phone mockup rendering a real bop */
-.phone{flex:0 0 300px;margin:0 auto}
-.frame{width:300px;background:#111;border-radius:44px;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
-.screen{background:var(--paper);border-radius:36px;overflow:hidden;padding-bottom:16px}
+/* CSS phone mockup rendering a real bop. aspect-ratio pins true iPhone
+   proportions (~9:19.5) so it never squashes into iPad shape on wide screens. */
+.phone{flex:0 0 290px;margin:0 auto}
+.frame{width:290px;background:#111;border-radius:48px;padding:10px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.screen{background:var(--paper);border-radius:40px;overflow:hidden;aspect-ratio:9/19.5;
+  display:flex;flex-direction:column}
+.homebar{width:104px;height:5px;background:#111;border-radius:3px;margin:auto auto 9px;flex:none}
 .sbar{display:flex;justify-content:space-between;align-items:center;padding:12px 22px 4px;font-size:12px;font-weight:700}
 .island{width:80px;height:20px;background:#111;border-radius:12px}
 .bophead{text-align:center;padding:8px 16px 4px}
@@ -144,6 +147,7 @@ footer a{color:#ccc;text-decoration:none;margin-left:14px}
           <div class="mstop"><div class="mrail"><div class="mdot">4</div></div>
             <div class="mcard"><div class="tm">7:30 PM</div><div class="nm">🍝 Dinner</div><div class="pl">📍 Via Carota</div></div></div>
         </div>
+        <div class="homebar"></div>
       </div></div>
     </div>
   </div>

@@ -98,9 +98,12 @@ h2.big{font-size:clamp(32px,4.5vw,44px);font-weight:800;letter-spacing:-.03em;ma
 
 /* community */
 section.community{padding-bottom:72px}
+.csub{font-size:16px;color:var(--dim);margin-bottom:22px}
 .ccards{display:grid;gap:12px}
 @media(min-width:800px){.ccards{grid-template-columns:repeat(3,1fr)}}
-.bcard{background:var(--card);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.bcard{background:var(--card);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center;
+  transition:transform .15s,box-shadow .15s}
+.bcard:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(10,10,10,.10)}
 .bcard .ring{width:44px;height:44px;border-radius:50%;border:3px solid var(--orange);
   display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;background:#fff}
 .bcard .bt{font-weight:700;font-size:15px}
@@ -226,9 +229,26 @@ footer .links{display:flex;gap:22px}
   </div>
 </section>
 
-<section class="community wrap" id="community" hidden>
-  <h2 class="big" style="margin-bottom:24px">fresh from the community</h2>
-  <div class="ccards" id="feedcards"></div>
+<section class="community wrap">
+  <h2 class="big" style="margin-bottom:10px">days worth stealing</h2>
+  <p class="csub">a bop is one day, planned stop by stop. here are a few shapes it takes.</p>
+  <div class="ccards">
+    <a class="bcard example" href="https://apps.apple.com/app/id6783394972">
+      <span class="ring">☕️🥯</span>
+      <span><span class="bt">hungover but functional</span><br>
+      <span class="bm">east village · by @you · 4 stops</span></span>
+    </a>
+    <a class="bcard example" href="https://apps.apple.com/app/id6783394972">
+      <span class="ring">🍝🍷</span>
+      <span><span class="bt">the lunch that became dinner</span><br>
+      <span class="bm">west village · by @you · 5 stops</span></span>
+    </a>
+    <a class="bcard example" href="https://apps.apple.com/app/id6783394972">
+      <span class="ring">🏛🍸</span>
+      <span><span class="bt">museum then martinis</span><br>
+      <span class="bm">upper east side · by @you · 3 stops</span></span>
+    </a>
+  </div>
 </section>
 
 <section class="receipt">
@@ -275,28 +295,14 @@ footer .links{display:flex;gap:22px}
 </footer>
 
 <script>
-// Live social proof: three latest community bops, linking into the share pages.
-(async () => {
-  try {
-    const r = await fetch("https://zsmueetbropiddolzxxo.supabase.co/rest/v1/bops?select=id,handle,neighborhood,data&is_public=eq.true&order=updated_at.desc&limit=3",
-      {headers:{apikey:"sb_publishable_3S1xaWVkXZa8IKzm6U9Xsw_H9zwYrXg"}});
-    const rows = await r.json();
-    if (!Array.isArray(rows) || !rows.length) return;
-    const esc = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
-    document.getElementById("feedcards").innerHTML = rows.map(row => {
-      const d = row.data || {};
-      const meta = [row.neighborhood, row.handle ? "by " + row.handle : ""].filter(Boolean).join(" · ");
-      return `<a class="bcard" href="/b/${encodeURIComponent(row.id)}">
-        <span class="ring">${esc((d.emoji || "🌆").slice(0, 2))}</span>
-        <span><span class="bt">${esc(d.title || "a great day")}</span><br>
-        <span class="bm">${esc(meta)} · ${(d.stops || []).length} stops</span></span></a>`;
-    }).join("");
-    document.getElementById("community").hidden = false;
-  } catch (e) { /* section stays hidden */ }
-})();
 ["cta-top","cta-hero","cta-receipt","cta-bottom"].forEach(id =>
   document.getElementById(id)?.addEventListener("click", () => {
     try { posthog.capture("landing_cta_tap", {placement: id}); } catch (e) {}
+  }));
+// Example day cards are their own conversion path worth measuring.
+document.querySelectorAll(".bcard.example").forEach((el, i) =>
+  el.addEventListener("click", () => {
+    try { posthog.capture("landing_cta_tap", {placement: "example_card_" + (i + 1)}); } catch (e) {}
   }));
 </script>
 </body>

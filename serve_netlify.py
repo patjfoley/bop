@@ -3,7 +3,8 @@ Used only for previewing; not deployed."""
 import http.server
 import functools
 
-REWRITES = {"/privacy": "/privacy.html", "/terms": "/terms.html", "/app": "/app.html"}
+REWRITES = {"/privacy": "/privacy.html", "/terms": "/terms.html",
+            "/app": "/auth.html", "/app-legacy": "/app.html"}
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):

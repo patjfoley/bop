@@ -2,5 +2,5 @@
 /terms     /terms.html     200
 /b/*       /b.html         200
 /u/*       /u.html         200
-/app        /auth.html      200
+/app        /auth.html      200!
 /app-legacy /app.html       200

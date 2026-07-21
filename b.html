@@ -165,7 +165,7 @@ function render(row, stats, rsvps, bopId){
   const by = row.handle
     ? `by <a href="/u/${encodeURIComponent(row.handle.replace("@",""))}">${esc(row.handle)}</a>` : "";
   const where = [row.neighborhood, row.city].filter(Boolean).join(", ") || d.area || "";
-  document.title = `${d.title||"A bop"} — bop`;
+  document.title = `${d.title||"A bop"} · bop`;
 
   let html = `<div class="bophead">
     <div class="emoji">${esc(d.emoji||"🌆")}</div>

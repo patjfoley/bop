@@ -118,7 +118,7 @@ async function load(){
   const totSaves = (stats||[]).reduce((a,s)=>a+(s.saves||0),0);
   const totDones = (stats||[]).reduce((a,s)=>a+(s.dones||0),0);
   const initial = handle.replace("@","").slice(0,1).toUpperCase();
-  document.title = `${handle} — bop`;
+  document.title = `${handle} · bop`;
 
   let html = `<div class="profhead">
       <span class="avatar">${esc(initial)}</span>

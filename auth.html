@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>bop · account</title>
+<meta name="robots" content="noindex">
+<meta name="apple-itunes-app" content="app-id=6783394972">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --paper:#F2F2F7; --card:#FFFFFF; --ink:#0A0A0A; --dim:#3A3A3C; --faint:#8E8E93;
+  --line:#D1D1D6; --orange:#FF6319; --blue:#0039A6; --green:#00933C;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);min-height:100vh;
+  font-family:"Helvetica Neue",Helvetica,Arial,-apple-system,sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--ink);text-decoration:none}
+.top{width:100%;max-width:560px;padding:22px 24px}
+.bullet{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;
+  color:#fff;font-weight:800;font-size:18px}
+.bullet+.bullet{margin-left:-6.3px}
+main{width:100%;max-width:420px;padding:24px;display:flex;flex-direction:column;gap:16px;flex:1;justify-content:center}
+.card{background:var(--card);border-radius:20px;padding:26px;box-shadow:0 14px 40px rgba(10,10,10,.08)}
+h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+p.sub{font-size:15px;line-height:1.5;color:var(--dim)}
+input{width:100%;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:16px;
+  font-family:inherit;margin-top:14px}
+button.go{width:100%;background:var(--ink);color:#fff;font-weight:800;font-size:16px;
+  border:none;border-radius:12px;padding:15px;margin-top:12px;cursor:pointer;font-family:inherit}
+.msg{font-size:13px;margin-top:10px}
+.msg.err{color:#D0021B}
+.msg.ok{color:var(--green);font-weight:700}
+a.cta{display:block;text-align:center;background:var(--ink);color:#fff;font-weight:800;
+  border-radius:12px;padding:15px;font-size:16px;margin-top:4px}
+.legacy{font-size:12px;color:var(--faint);text-align:center;padding:20px}
+.legacy a{color:var(--faint);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="/" aria-label="bop home">
+    <span class="bullet" style="background:var(--orange)">b</span><span class="bullet" style="background:var(--blue)">o</span><span class="bullet" style="background:var(--green)">p</span>
+  </a>
+</div>
+
+<main>
+  <div class="card" id="getapp">
+    <h1>bop lives on your iphone now</h1>
+    <p class="sub">the web version has retired. everything moved into the app: plan the day, live it stop by stop, and keep the receipt.</p>
+    <a class="cta" href="https://apps.apple.com/app/id6783394972">get bop on the app store</a>
+  </div>
+
+  <div class="card" id="setpw" hidden>
+    <h1>set your password</h1>
+    <p class="sub">choose a password for your bop account, then sign in on the app.</p>
+    <input type="password" id="pw" placeholder="new password (6+ characters)" autocomplete="new-password">
+    <button class="go" id="save">save password</button>
+    <div class="msg" id="msg"></div>
+    <a class="cta" id="done-cta" href="https://apps.apple.com/app/id6783394972" hidden>open the app store</a>
+  </div>
+</main>
+
+<div class="legacy">
+  looking for the old web app? <a href="/app-legacy">it still works here</a> ·
+  <a href="/privacy">privacy</a> · <a href="/terms">terms</a>
+</div>
+
+<script>
+const sb = supabase.createClient(
+  "https://zsmueetbropiddolzxxo.supabase.co",
+  "sb_publishable_3S1xaWVkXZa8IKzm6U9Xsw_H9zwYrXg"
+);
+
+// Recovery and invite links land here (via the / redirect) with a token in the
+// hash. supabase-js consumes it; both flows end at "set your password".
+const cameFromAuthLink = location.hash.includes("access_token")
+  || location.hash.includes("type=recovery") || location.hash.includes("type=invite");
+
+function showSetPassword() {
+  document.getElementById("getapp").hidden = true;
+  document.getElementById("setpw").hidden = false;
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") showSetPassword();
+  else if (event === "SIGNED_IN" && cameFromAuthLink) showSetPassword();
+});
+
+document.getElementById("save").onclick = async () => {
+  const pw = document.getElementById("pw").value;
+  const msg = document.getElementById("msg");
+  if (pw.length < 6) { msg.className = "msg err"; msg.textContent = "password needs at least 6 characters."; return; }
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if (error) { msg.className = "msg err"; msg.textContent = error.message; return; }
+  msg.className = "msg ok"; msg.textContent = "password saved. sign in on the app with your email and this password.";
+  document.getElementById("save").hidden = true;
+  document.getElementById("pw").hidden = true;
+  document.getElementById("done-cta").hidden = false;
+};
+</script>
+</body>
+</html>

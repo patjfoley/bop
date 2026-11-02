@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>bop</title>
+<meta name="description" content="A collection of days planned stop by stop.">
+<meta property="og:title" content="My bops: days planned stop by stop">
+<meta property="og:description" content="Real days, planned stop by stop. See every plan and save the ones you love.">
+<meta property="og:image" content="https://joinbop.com/og-icon.png">
+<meta property="og:type" content="profile">
+<meta name="twitter:card" content="summary">
+<meta name="apple-itunes-app" content="app-id=6783394972">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<script>
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  posthog.init('phc_AAPeJ2z9HtNmV7PAub8rys3veoMeFZo9oqxZJVNaxk3q',{api_host:'https://us.i.posthog.com',person_profiles:'identified_only'})
+</script>
+<style>
+:root{
+  --paper:#f2f2f7; --card:#ffffff; --ink:#0a0a0a; --dim:#666; --faint:#999;
+  --line:#e5e5e7; --orange:#FF6319; --blue:#0039A6; --green:#00933C; --yellow:#F4C522;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--paper);color:var(--ink);
+  font-family:"Helvetica Neue",Helvetica,Arial,-apple-system,sans-serif}
+#page{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+header.top{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;
+  padding:calc(env(safe-area-inset-top) + 12px) 18px 10px;
+  border-bottom:6px solid var(--yellow);
+  display:flex;align-items:center;justify-content:space-between}
+.wbullet{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;color:#fff;font-weight:700;font-size:15px;line-height:1}
+.wordmark{display:flex;gap:4px;text-decoration:none}
+.getapp{background:#fff;color:var(--ink);font-weight:700;font-size:13px;
+  padding:8px 14px;border-radius:999px;text-decoration:none}
+main{flex:1;padding:24px 18px 40px}
+.profhead{text-align:center;margin-bottom:6px}
+.avatar{width:74px;height:74px;border-radius:50%;background:var(--ink);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:30px;font-weight:800}
+.profhead h1{font-size:26px;font-weight:800;margin-top:10px}
+.stats{display:flex;justify-content:center;gap:26px;margin:14px 0 22px}
+.stat{text-align:center}
+.stat .n{font-size:20px;font-weight:800}
+.stat .l{font-size:12px;color:var(--dim)}
+.bcard{background:var(--card);border-radius:14px;padding:14px 16px;text-decoration:none;
+  display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.bcard .ring{width:46px;height:46px;border-radius:50%;border:3px solid var(--orange);
+  display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;background:#fff}
+.bcard .bt{font-weight:700;font-size:16px;color:var(--ink)}
+.bcard .bm{font-size:12px;color:var(--dim);margin-top:2px}
+.cta{display:block;text-align:center;background:var(--ink);color:#fff;font-weight:800;
+  border-radius:14px;padding:16px;margin:22px 0 8px;text-decoration:none;font-size:16px}
+.state{padding:60px 24px;text-align:center;color:var(--dim);font-size:15px}
+footer{padding:18px;text-align:center;color:var(--faint);font-size:12px}
+footer a{color:var(--faint)}
+</style>
+</head>
+<body>
+<div id="page">
+  <header class="top">
+    <a class="wordmark" href="/" aria-label="bop home" style="text-decoration:none">
+      <span class="wbullet" style="background:var(--orange)">b</span>
+      <span class="wbullet" style="background:var(--blue)">o</span>
+      <span class="wbullet" style="background:var(--green)">p</span>
+    </a>
+    <a class="getapp" href="https://apps.apple.com/app/id6783394972">Get the app</a>
+  </header>
+  <main>
+    <div id="content"><div class="state">Loading&hellip;</div></div>
+  </main>
+  <footer>
+    your day, stop by stop &middot; <a href="/privacy">privacy</a> &middot; <a href="/terms">terms</a>
+  </footer>
+</div>
+
+<script>
+const SUPABASE_URL = "https://zsmueetbropiddolzxxo.supabase.co";
+const ANON_KEY = "sb_publishable_3S1xaWVkXZa8IKzm6U9Xsw_H9zwYrXg";
+const APP_STORE = "https://apps.apple.com/app/id6783394972";
+
+function esc(s){const d=document.createElement("div");d.textContent=s??"";return d.innerHTML;}
+function handleFromURL(){
+  const parts = location.pathname.split("/").filter(Boolean);
+  let h = (parts[0] === "u" && parts[1]) ? decodeURIComponent(parts[1])
+        : new URLSearchParams(location.search).get("h");
+  if(!h) return null;
+  return h.startsWith("@") ? h : "@" + h;
+}
+
+async function sb(path){
+  const r = await fetch(SUPABASE_URL + path, {headers:{apikey:ANON_KEY}});
+  return r.json();
+}
+
+async function load(){
+  const handle = handleFromURL();
+  const content = document.getElementById("content");
+  if(!handle){ content.innerHTML = `<div class="state">No profile here.</div>`; return; }
+  let bops = [];
+  try{
+    bops = await sb(`/rest/v1/bops?select=id,neighborhood,city,data&is_public=eq.true&handle=eq.${encodeURIComponent(handle)}&order=updated_at.desc&limit=50`);
+  }catch(e){}
+  if(!Array.isArray(bops) || !bops.length){
+    content.innerHTML = `<div class="state">${esc(handle)} hasn't shared any bops yet.</div>
+      <a class="cta" href="${APP_STORE}">Plan yours with Bop</a>`;
+    return;
+  }
+  // Aggregate saves/dones across their bops for the header stats.
+  let stats = [];
+  try{
+    const ids = bops.map(b=>`"${b.id}"`).join(",");
+    stats = await sb(`/rest/v1/bop_stats?bop_id=in.(${encodeURIComponent(bops.map(b=>b.id).join(","))})`);
+  }catch(e){}
+  const byId = Object.fromEntries((stats||[]).map(s=>[s.bop_id,s]));
+  const totSaves = (stats||[]).reduce((a,s)=>a+(s.saves||0),0);
+  const totDones = (stats||[]).reduce((a,s)=>a+(s.dones||0),0);
+  const initial = handle.replace("@","").slice(0,1).toUpperCase();
+  document.title = `${handle} · bop`;
+
+  let html = `<div class="profhead">
+      <span class="avatar">${esc(initial)}</span>
+      <h1>${esc(handle)}</h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n">${bops.length}</div><div class="l">bops</div></div>
+      <div class="stat"><div class="n">${totSaves}</div><div class="l">saves</div></div>
+      <div class="stat"><div class="n">${totDones}</div><div class="l">did this</div></div>
+    </div>`;
+
+  html += bops.map(row => {
+    const d = row.data || {};
+    const st = byId[row.id] || {};
+    const bits = [row.neighborhood || row.city, `${(d.stops||[]).length} stops`];
+    if(st.saves) bits.push(`${st.saves} saved`);
+    return `<a class="bcard" href="/b/${encodeURIComponent(row.id)}">
+      <span class="ring">${esc((d.emoji||"🌆").slice(0,2))}</span>
+      <span><span class="bt">${esc(d.title||"A great day")}</span><br>
+      <span class="bm">${esc(bits.filter(Boolean).join(" · "))}</span></span></a>`;
+  }).join("");
+
+  html += `<a class="cta" href="${APP_STORE}">Follow ${esc(handle)} in the app</a>`;
+  content.innerHTML = html;
+  try{ posthog.capture("profile_page_view", {handle}); }catch(e){}
+}
+load();
+</script>
+</body>
+</html>
